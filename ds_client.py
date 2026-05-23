@@ -8,7 +8,6 @@ import ds_protocol
 
 
 def _send_command(f_send, f_recv, msg: str) -> ds_protocol.DataTuple:
-    """Send a message to the server and return parsed response."""
     f_send.write(msg + '\r\n')
     f_send.flush()
     resp = f_recv.readline()
@@ -16,7 +15,6 @@ def _send_command(f_send, f_recv, msg: str) -> ds_protocol.DataTuple:
 
 
 def _join(f_send, f_recv, username: str, password: str) -> str:
-    """Join the DSP server. Returns token on success, None on failure."""
     msg = ds_protocol.join(username, password)
     result = _send_command(f_send, f_recv, msg)
     if result.type == 'ok':
@@ -25,14 +23,12 @@ def _join(f_send, f_recv, username: str, password: str) -> str:
 
 
 def _post(f_send, f_recv, token: str, message: str) -> bool:
-    """Send a post to the DSP server. Returns True on success."""
     msg = ds_protocol.post(token, message)
     result = _send_command(f_send, f_recv, msg)
     return result.type == 'ok'
 
 
 def _bio(f_send, f_recv, token: str, bio_entry: str) -> bool:
-    """Send a bio to the DSP server. Returns True on success."""
     msg = ds_protocol.bio(token, bio_entry)
     result = _send_command(f_send, f_recv, msg)
     return result.type == 'ok'
@@ -50,6 +46,12 @@ def send(server: str, port: int, username: str, password: str,
     :param message: The message to be sent to the server.
     :param bio: Optional, a bio for the user.
     '''
+    has_message = message and message.strip()
+    has_bio = bio and bio.strip()
+
+    if not has_message and not has_bio:
+        return False
+
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((server, int(port)))
@@ -60,11 +62,11 @@ def send(server: str, port: int, username: str, password: str,
             if token is None:
                 return False
 
-            if message and message.strip():
+            if has_message:
                 if not _post(f_send, f_recv, token, message):
                     return False
 
-            if bio and bio.strip():
+            if has_bio:
                 if not _bio(f_send, f_recv, token, bio):
                     return False
 

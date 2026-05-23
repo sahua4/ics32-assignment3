@@ -359,7 +359,14 @@ def process_command(user_input, profile, path):
     elif command == 'R':
         cmd_read(parts[1:])
     elif command == 'T':
-        cmd_publish(profile, path)
+        port = DEFAULT_PORT
+        if len(parts) > 1:
+            try:
+                port = int(parts[1])
+            except ValueError:
+                print("ERROR")
+                return profile, path
+        cmd_publish(profile, path, port)
     else:
         print("ERROR")
 
